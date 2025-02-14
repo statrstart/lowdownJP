@@ -1,0 +1,30 @@
+% LuaLaTeX 文書
+%\documentclass[a4paper,landscape,tate,book,fontsize=11pt]{jlreq}
+\documentclass[a6paper,tate,book,fontsize=10pt,onecolumn,hanging_punctuation]{jlreq}
+\usepackage[haranoaji,deluxe,nfssonly, jfm_yoko=jlreq,jfm_tate=jlreqv]{luatexja-preset}
+\usepackage{graphicx}
+\usepackage{pxrubrica}
+\usepackage{ascmac}
+\usepackage{url}
+\usepackage{ifthen}
+\newcommand{\tcap}{}
+\makeatletter
+\renewcommand{\maketitle}{
+\vspace*{10mm}
+\noindent{\huge\bfseries\@title}
+\vfill
+\begin{flushright}
+{\Large\@author}
+\end{flushright}
+\date{\vspace{-5mm}}
+}
+\makeatother
+\begin{document}
+\thispagestyle{empty}
+$ifdef(or(title,author,date))$\title{$title.escapelatex$}$endif$
+$ifdef(author)$\author{$author.escapelatex$}$endif$
+\maketitle
+\clearpage
+\setcounter{page}{1}
+$body$
+\end{document}
