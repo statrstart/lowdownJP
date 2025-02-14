@@ -30,7 +30,7 @@
 
 #include "lowdown.h"
 #include "extern.h"
-
+int count; 
 struct latex {
 	unsigned int	 oflags; /* same as in lowdown_opts */
 	struct hentryq	 headers_used; /* headers we've seen */
@@ -114,14 +114,14 @@ rndr_blockcode(struct lowdown_buf *ob,
 	} else
 		HBUF_PUTSL(ob, "\n");
 #else
-	HBUF_PUTSL(ob, "\\begin{verbatim}\n");
+	HBUF_PUTSL(ob, "\\if&\\tcap&\\else\\centering\\captionof{コード}{\\tcap}\\fi\n\\begin{verbatim}\n");
 #endif
 	if (!hbuf_putb(ob, &param->text))
 		return 0;
 #if 0
 	HBUF_PUTSL(ob, "\\end{lstlisting}\n");
 #else
-	return HBUF_PUTSL(ob, "\\end{verbatim}\n");
+	return HBUF_PUTSL(ob, "\\end{verbatim}\n\\raggedright\n\\renewcommand{\\tcap}{}\n");
 #endif
 }
 
@@ -171,11 +171,23 @@ rndr_codespan(const struct latex *st, struct lowdown_buf *ob,
 	HBUF_PUTSL(ob, "\\lstinline{");
 	hbuf_putb(ob, text);
 #else
-	if (!HBUF_PUTSL(ob, "\\texttt{"))
+	if (!HBUF_PUTSL(ob, "\\verb|"))
 		return 0;
 	if (!rndr_escape(st, ob, &param->text))
 		return 0;
 #endif
+	return HBUF_PUTSL(ob, "|");
+}
+
+static int
+rndr_strikethrough(struct lowdown_buf *ob,
+	const struct lowdown_buf *content)
+{
+
+	if (!HBUF_PUTSL(ob,"\\SOUT{"))
+		return 0;
+	if (!hbuf_putb(ob, content))
+		return 0;
 	return HBUF_PUTSL(ob, "}");
 }
 
@@ -184,11 +196,11 @@ rndr_triple_emphasis(struct lowdown_buf *ob,
 	const struct lowdown_buf *content)
 {
 
-	if (!HBUF_PUTSL(ob, "\\textbf{\\emph{"))
+	if (!HBUF_PUTSL(ob, "\\Emph{"))
 		return 0;
 	if (!hbuf_putb(ob, content))
 		return 0;
-	return HBUF_PUTSL(ob, "}}");
+	return HBUF_PUTSL(ob, "}");
 }
 
 static int
@@ -220,7 +232,7 @@ rndr_highlight(struct lowdown_buf *ob,
 	const struct lowdown_buf *content)
 {
 
-	if (!HBUF_PUTSL(ob, "\\underline{"))
+	if (!HBUF_PUTSL(ob, "\\uline{"))
 		return 0;
 	if (!hbuf_putb(ob, content))
 		return 0;
@@ -231,7 +243,7 @@ static int
 rndr_linebreak(struct lowdown_buf *ob)
 {
 
-	return HBUF_PUTSL(ob, "\\linebreak\n");
+	return HBUF_PUTSL(ob, "\\newline\n");
 }
 
 static int
@@ -445,11 +457,11 @@ rndr_raw_block(struct lowdown_buf *ob,
 
 	if (ob->size && !HBUF_PUTSL(ob, "\n"))
 		return 0;
-	if (!HBUF_PUTSL(ob, "\\begin{verbatim}\n"))
+	if (!HBUF_PUTSL(ob, "\\if&\\tcap&\\else\\centering\\captionof{コード}{\\tcap}\\fi\n\\begin{verbatim}\n"))
 		return 0;
 	if (!hbuf_put(ob, param->text.data + org, sz - org))
 		return 0;
-	return HBUF_PUTSL(ob, "\\end{verbatim}\n");
+	return HBUF_PUTSL(ob, "\\end{verbatim}\n\\raggedright\n\\renewcommand{\\tcap}{}\n");
 }
 
 static int
@@ -458,8 +470,9 @@ rndr_hrule(struct lowdown_buf *ob)
 
 	if (ob->size && !hbuf_putc(ob, '\n'))
 		return 0;
-	return HBUF_PUTSL(ob, "\\noindent\\hrulefill\n");
+	return HBUF_PUTSL(ob, "\\clearpage\n");
 }
+
 
 static int
 rndr_image(const struct latex *st, struct lowdown_buf *ob,
@@ -486,7 +499,8 @@ rndr_image(const struct latex *st, struct lowdown_buf *ob,
 
 	/* Extended attributes override dimensions. */
 
-	if (!HBUF_PUTSL(ob, "\\includegraphics["))
+	if (!HBUF_PUTSL(ob, "\\begin{figure}[H] \n    \\adjincludegraphics[")) 
+	/* if (!HBUF_PUTSL(ob, "\\adjincludegraphics[")) */
 		return 0;
 	if (param->attr_width.size || param->attr_height.size) {
 		if (param->attr_width.size &&
@@ -529,21 +543,30 @@ rndr_image(const struct latex *st, struct lowdown_buf *ob,
 		return 0;
 	cp = memrchr(param->link.data, '.', param->link.size);
 	if (cp != NULL) {
-		if (!HBUF_PUTSL(ob, "{"))
-			return 0;
+
 		if (!lowdown_latex_esc
 		    (ob, param->link.data, cp - param->link.data))
 			return 0;
-		if (!HBUF_PUTSL(ob, "}"))
-			return 0;
+
 		if (!lowdown_latex_esc
 		    (ob, cp, param->link.size - (cp - param->link.data)))
+			return 0;
+
+		if (!HBUF_PUTSL(ob, "}"))
 			return 0;
 	} else {
 		if (!rndr_escape(st, ob, &param->link))
 			return 0;
 	}
-	return HBUF_PUTSL(ob, "}");
+	if (param->alt.data != NULL){
+	if (!HBUF_PUTSL(ob, "\n\\caption{") ||
+	    !hbuf_putb(ob, &param->alt) ||
+	    !HBUF_PUTSL(ob, "}"))
+		return 0;
+	}
+
+	return HBUF_PUTSL(ob, "\n\\end{figure}"); 
+	/* return HBUF_PUTSL(ob, "}"); */
 }
 
 static int
@@ -560,14 +583,14 @@ static int
 rndr_table(struct lowdown_buf *ob,
 	const struct lowdown_buf *content)
 {
-
+	count=0;
 	/* Open the table in rndr_table_header. */
 
 	if (ob->size && !hbuf_putc(ob, '\n'))
 		return 0;
 	if (!hbuf_putb(ob, content))
 		return 0;
-	return HBUF_PUTSL(ob, "\\end{longtable}\n");
+	return HBUF_PUTSL(ob, "\\bottomrule\n\\end{longtable}\n\\renewcommand{\\tcap}{}\n");
 }
 
 static int
@@ -593,7 +616,7 @@ rndr_table_header(struct lowdown_buf *ob,
 		if (!hbuf_putc(ob, align))
 			return 0;
 	}
-	if (!HBUF_PUTSL(ob, "}\n"))
+	if (!HBUF_PUTSL(ob, "}\n\\if&\\tcap&%\n\\else\n\\caption{\\tcap}\n\\fi\n\\\\\n\\toprule\\relax\n"))
 		return 0;
 	return hbuf_putb(ob, content);
 }
@@ -604,11 +627,19 @@ rndr_tablecell(struct lowdown_buf *ob,
 	const struct rndr_table_cell *param)
 {
 
-	if (!hbuf_putb(ob, content))
-		return 0;
+	if (!hbuf_putb(ob, content)){
+		return 0; 
+	}
+       count++;
+	if (count == param->columns){
 	return (param->col < param->columns - 1) ?
 		HBUF_PUTSL(ob, " & ") :
-		HBUF_PUTSL(ob, "  \\\\\n");
+		HBUF_PUTSL(ob, "  \\\\\n\\midrule\\relax\n");
+	} else {
+ 	return (param->col < param->columns - 1) ?
+ 		HBUF_PUTSL(ob, " & ") :
+ 		HBUF_PUTSL(ob, "  \\\\\n");
+	}
 }
 
 static int
@@ -620,7 +651,7 @@ rndr_superscript(struct lowdown_buf *ob,
 
 	elem = (type == LOWDOWN_SUPERSCRIPT) ? "super" : "sub";
 
-	return hbuf_printf(ob, "\\text%sscript{", elem) &&
+	return hbuf_printf(ob, "\\Text%sscript{", elem) &&
 	    hbuf_putb(ob, content) &&
 	    HBUF_PUTSL(ob, "}");
 }
@@ -708,23 +739,120 @@ rndr_root(const struct latex *st, struct lowdown_buf *ob,
 	    "\\PassOptionsToPackage{unicode}{hyperref}\n"
 	    "\\PassOptionsToPackage{hyphens}{url}\n"
 	    "%\n"
-	    "\\documentclass[11pt,a4paper]{article}\n"
-	    "\\usepackage{amsmath,amssymb}\n"
-	    "\\usepackage{lmodern}\n"
-	    "\\usepackage{iftex}\n"
+	    "\\input{iftex.sty}\n"
 	    "\\ifPDFTeX\n"
+	    "  \\documentclass[11pt,a4paper]{article}\n"
+	    "  \\usepackage[margin=2.5cm]{geometry}\n"
 	    "  \\usepackage[T1]{fontenc}\n"
 	    "  \\usepackage[utf8]{inputenc}\n"
-	    "  \\usepackage{textcomp} % provide euro and other symbols\n"
-	    "\\else % if luatex or xetex\n"
-	    "  \\usepackage{unicode-math}\n"
-	    "  \\defaultfontfeatures{Scale=MatchLowercase}\n"
-	    "  \\defaultfontfeatures[\\rmfamily]{Ligatures=TeX,Scale=1}\n"
+	    "  \\usepackage{textcomp}\n"
 	    "\\fi\n"
+	    "\\ifxetex\n"
+	    "\\documentclass[xelatex,a4paper,ja=standard,11pt,everyparhook=compat]{bxjsarticle}\n"
+	    "\\setpagelayout*{truedimen,top=20truemm,bottom=30truemm,foot=15truemm,left=20truemm,right=20truemm}\n"
+	    "\\fi\n"
+	    "\\ifluatex\n"
+	    "\\documentclass[lualatex,a4paper,11pt]{ltjsarticle}\n"
+	    "\\usepackage[truedimen,top=20truemm,bottom=30truemm,foot=15truemm,left=20truemm,right=20truemm]{geometry}\n"
+	    "\\fi\n"
+	    "\\usepackage{ascmac,amsmath,amssymb}\n"
 	    "\\usepackage{xcolor}\n"
+	    "\\newcommand{\\ami}[1]{\\colorbox[gray]{0.85}{#1}}\n"
 	    "\\usepackage{graphicx}\n"
-	    "\\usepackage{longtable}\n"
-	    "\\usepackage{hyperref}\n"))
+	    "\\usepackage{longtable,booktabs}\n"
+	    "\\newcommand{\\tcap}{}\n"
+	    "\\usepackage{caption}\n"
+	    "\\usepackage{float}\n"
+	    "\\floatplacement{figure}{H}\n"
+	    "\\floatplacement{table}{H}\n"
+	    "\\newfloat{コード}\n"
+	    "\\captionsetup{コード}\n"
+	    "\\setlength\\heavyrulewidth{0.2ex}\n"
+	    "\\renewcommand{\\arraystretch}{1.1}\n"
+	    "\\usepackage{multicol}\n"
+	    "\\usepackage[normalem]{ulem}\n"
+	    "\\usepackage{wrapfig}\n"
+	    "\\newcommand{\\WF}[1]{\n"
+	    "\\begin{wrapfigure}[]{r}{0.25\\textwidth}\n"
+	    "\\vspace{-2ex}\n"
+	    "\\adjincludegraphics[width=0.90\\linewidth]{#1}\n"
+	    "\\if&\\tcap&%\n\\else\n\\caption{\\tcap}\n\\fi\n"
+	    "\\end{wrapfigure}\n\\renewcommand{\\tcap}{}\n"
+	    "}\n"
+	    "\\usepackage{calc}\n"
+	    "\\usepackage{listings,jvlisting}\n"
+	    "\\lstset{basicstyle=\\ttfamily,columns=fixed,basewidth=0.5em,frame=tb,breaklines=true,numbers=left,numberstyle=\\scriptsize,lineskip=-0.2ex}\n"
+	    "\\let\\verbatim\\someundefinedcommand\n"
+	    "\\lstnewenvironment{verbatim}{}{}\n"
+	    "\\usepackage{enumitem}\n"
+	    "\\usepackage{fancybox}\n"
+	    "\\usepackage{url}\n"
+	    "\\usepackage{hyperref}\n"
+	    "\\usepackage{adjustbox}\n"
+	    "\\adjustboxset*{center}\n"
+	    "\\newcommand{\\SOUT}[1]{\\sout{#1}}\n"
+	    "\\renewcommand{\\labelitemii}{$\\diamond$}\n"
+	    "\\ifPDFTeX\n"
+	    "\\newcommand{\\Textsuperscript}[1]{\\textsuperscript{#1}}\n"
+	    "\\newcommand{\\Textsubscript}[1]{\\textsubscript{#1}}\n"
+	    "\\newcommand{\\Emph}[1]{\\textbf{\\textit{#1}}}\n"
+	    "\\else % if luatex or xetex\n"
+	    "\\usepackage{pxrubrica}\n"
+	    "\\rubysetup{J}\n"
+	    "\\renewcommand{\\emph}[1]{\\ami{#1}}\n"
+	    "\\newcommand{\\Textsuperscript}[1]{\\textsuperscript{#1}}\n"
+	    "\\newcommand{\\Textsubscript}[1]{\\textsubscript{#1}}\n"
+	    "\\newcommand{\\Emph}[1]{\\jkenten[s]{#1}}\n"
+	    "\\newcommand{\\naka}[1]{\\begin{center}{\\Large #1}\\end{center}}\n"
+	    "\\newcommand{\\migi}[1]{\\begin{flushright}{\\large #1}\\end{flushright}}\n"
+	    "\\fi\n"
+	    "\\ifluatex\n"
+	    "\\usepackage{ifthen}\n"
+	    "\\usepackage{luacolor,lua-ul}\n"
+	    "\\renewcommand{\\uline}[1]{\\underLine{#1}}\n"
+	    "\\renewcommand{\\SOUT}[1]{\\strikeThrough{#1}}\n"
+	    "% 均等割定義\kintou{字数}{文字列}\n"
+	    "\\makeatletter\n"
+	    "\\newlength{\\wtarget}\n"
+	    "\\newlength{\\wactual}\n"
+	    "\\newcommand*{\\kintou}[2]{\\kintouwidth{#1\\zw}{#2}}\n"
+	    "\\newcommand*{\\kintouwidth}[2]{\n"
+    	    "\\setlength{\\wtarget}{#1}\n"
+    	    "\\settowidth{\\wactual}{#2}\n"
+    	    "\\ifthenelse{\\lengthtest{\\wtarget < \\wactual}}{\n"
+            "\\setlength{\\wtarget}{1pt * \\real{\\strip@pt\\wtarget} / \\real{\\strip@pt\\wactual}}\n"
+            "\\scalebox{\\strip@pt\\wtarget}[1]{#2}\n"
+    	    "}{\n"
+            "\\makebox[\\wtarget][s]{#2}\n"
+    	    "}\n"
+	    "}\n"
+	    "\\makeatother\n"
+	    "\\fi\n"
+	    "\\ifxetex\n"
+	    "\\captionsetup{labelformat=empty,labelsep=none}\n"
+	    "\\usepackage{xeCJKfntef}\n"
+	    "% 均等割定義\kintou{字数}{文字列}\n"
+	    "\\newcommand\\kintou[2]{{ \n"
+	    "\\setkanjiskip{\\fill} \n"
+	    "\\makebox[#1\\zw][s]{#2}}} \n"
+	    "\\fi\n"
+	    "\\makeatletter\n"
+	    "\\let\\@emptyauthor\\@author\n"
+	    "\\renewcommand{\\@maketitle}{\\newpage\\null\\vskip 1.0cm\n"
+    	    "\\begin{center}\n"
+        	    "{\\Large{\\@title}}\n"
+        	    "\\ifx\\@author\\@emptyauthor\n"
+          	    "\\vskip 0.5cm\n"
+        	    "\\else\n"
+          	    "\\vskip 0.5cm{\\large\\@author}\\vskip 0.3cm\n"
+        	    "\\fi\n"
+        	    "\\ifx\\@date\\@empty\n"
+        	    "\\else\n"
+          	    "{\\large\\@date}\\vskip 0.3cm\n"
+        	    "\\fi\n"
+    	    "\\end{center}\n"
+	    "\\vskip 0.5cm}\n"
+	    "\\makeatother\n"))
 	    	return 0;
 
 	/* Optional raw LaTeX header. */
@@ -917,6 +1045,10 @@ rndr(struct lowdown_buf *ob,
 		break;
 	case LOWDOWN_EMPHASIS:
 		if (!rndr_emphasis(ob, tmp))
+			return 0;
+		break;
+	case LOWDOWN_STRIKETHROUGH:
+		if (!rndr_strikethrough(ob, tmp))
 			return 0;
 		break;
 	case LOWDOWN_HIGHLIGHT:
