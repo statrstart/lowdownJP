@@ -34,13 +34,15 @@ int
 lowdown_latex_esc(struct lowdown_buf *ob, const char *data, size_t sz)
 {
 	size_t	 i;
-
+	char moji='\\';
 	for (i = 0; i < sz; i++)
-		switch (data[i]) {
+           if(data[i]==moji && i < sz-1) {
+             i++;
+	     switch (data[i]) {
 		case '&':
 		case '%':
 		case '$':
-		case '#':
+/*		case '#':	*/
 		case '_':
 		case '{':
 		case '}':
@@ -62,11 +64,16 @@ lowdown_latex_esc(struct lowdown_buf *ob, const char *data, size_t sz)
 				return 0;
 			break;
 		default:
+			if (!hbuf_putc(ob, '\\'))
+				return 0;
 			if (!hbuf_putc(ob, data[i]))
 				return 0;
 			break;
 		}
-
+         }
+           else {
+ 		if (!hbuf_putc(ob, data[i]))
+			return 0;
+                }
 	return 1;
 }
-
