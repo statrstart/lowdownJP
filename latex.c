@@ -114,7 +114,7 @@ rndr_blockcode(struct lowdown_buf *ob,
 	} else
 		HBUF_PUTSL(ob, "\n");
 #else
-	HBUF_PUTSL(ob, "\\if&\\tcap&\\else\\centering\\captionof{コード}{\\tcap}\\fi\n\\begin{verbatim}\n");
+	HBUF_PUTSL(ob, "\\if&\\tcap&\\else\\centering\\captionof{コード}{\\tcap}\\label{code:\\tcap}\\fi\n\\begin{verbatim}\n");
 #endif
 	if (!hbuf_putb(ob, &param->text))
 		return 0;
@@ -457,7 +457,7 @@ rndr_raw_block(struct lowdown_buf *ob,
 
 	if (ob->size && !HBUF_PUTSL(ob, "\n"))
 		return 0;
-	if (!HBUF_PUTSL(ob, "\\if&\\tcap&\\else\\centering\\captionof{コード}{\\tcap}\\fi\n\\begin{verbatim}\n"))
+	if (!HBUF_PUTSL(ob, "\\if&\\tcap&\\else\\centering\\captionof{コード}{\\tcap}\\label{code:\\tcap}\\fi\n\\begin{verbatim}\n"))
 		return 0;
 	if (!hbuf_put(ob, param->text.data + org, sz - org))
 		return 0;
@@ -561,6 +561,8 @@ rndr_image(const struct latex *st, struct lowdown_buf *ob,
 	if (param->alt.data != NULL){
 	if (!HBUF_PUTSL(ob, "\n\\caption{") ||
 	    !hbuf_putb(ob, &param->alt) ||
+	    !HBUF_PUTSL(ob, "}\n\\label{fig:") ||
+	    !hbuf_putb(ob, &param->alt) ||
 	    !HBUF_PUTSL(ob, "}"))
 		return 0;
 	}
@@ -616,7 +618,7 @@ rndr_table_header(struct lowdown_buf *ob,
 		if (!hbuf_putc(ob, align))
 			return 0;
 	}
-	if (!HBUF_PUTSL(ob, "}\n\\if&\\tcap&%\n\\else\n\\caption{\\tcap}\n\\fi\n\\\\\n\\toprule\\relax\n"))
+	if (!HBUF_PUTSL(ob, "}\n\\if&\\tcap&%\n\\else\n\\caption{\\tcap}\\label{tbl:\\tcap}\n\\fi\n\\\\\n\\toprule\\relax\n"))
 		return 0;
 	return hbuf_putb(ob, content);
 }
@@ -776,7 +778,7 @@ rndr_root(const struct latex *st, struct lowdown_buf *ob,
 	    "\\begin{wrapfigure}[]{r}{0.25\\textwidth}\n"
 	    "\\vspace{-2ex}\n"
 	    "\\adjincludegraphics[width=0.90\\linewidth]{#1}\n"
-	    "\\if&\\tcap&%\n\\else\n\\caption{\\tcap}\n\\fi\n"
+	    "\\if&\\tcap&%\n\\else\n\\caption{\\tcap}\\label{fig:\\tcap}\n\\fi\n"
 	    "\\end{wrapfigure}\n\\renewcommand{\\tcap}{}\n"
 	    "}\n"
 	    "\\usepackage{calc}\n"
@@ -800,8 +802,8 @@ rndr_root(const struct latex *st, struct lowdown_buf *ob,
 	    "\\usepackage{pxrubrica}\n"
 	    "\\rubysetup{J}\n"
 	    "\\renewcommand{\\emph}[1]{\\ami{#1}}\n"
-	    "\\newcommand{\\Textsuperscript}[1]{\\textsuperscript{#1}}\n"
-	    "\\newcommand{\\Textsubscript}[1]{\\textsubscript{#1}}\n"
+	    "\\newcommand{\\Textsuperscript}[1]{\\WF{#1}}\n"
+	    "\\newcommand{\\Textsubscript}[1]{\\renewcommand{\\tcap}{#1}}\n"
 	    "\\newcommand{\\Emph}[1]{\\jkenten[s]{#1}}\n"
 	    "\\newcommand{\\naka}[1]{\\begin{center}{\\Large #1}\\end{center}}\n"
 	    "\\newcommand{\\migi}[1]{\\begin{flushright}{\\large #1}\\end{flushright}}\n"
