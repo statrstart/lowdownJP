@@ -1,13 +1,45 @@
 % LuaLaTeX 文書
 %\documentclass[a4paper,landscape,tate,book,fontsize=11pt]{jlreq}
-\documentclass[a6paper,tate,book,fontsize=10pt,onecolumn,hanging_punctuation]{jlreq}
+\documentclass[a6paper,tate,book,fontsize=12pt,onecolumn,hanging_punctuation]{jlreq}
 \usepackage[haranoaji,deluxe,nfssonly, jfm_yoko=jlreq,jfm_tate=jlreqv]{luatexja-preset}
+\usepackage[truedimen,top=20truemm,bottom=12truemm,left=12truemm,right=12truemm]{geometry}
 \usepackage{graphicx}
 \usepackage{pxrubrica}
+\rubysetup{J}
 \usepackage{ascmac}
+\usepackage{xcolor}
+\newcommand{\ami}[1]{\colorbox[gray]{0.85}{#1}}
 \usepackage{url}
-\usepackage{ifthen}
-\newcommand{\tcap}{}
+\usepackage{hyperref}
+\usepackage{adjustbox}
+\adjustboxset*{center}
+\usepackage{enumitem}
+\renewcommand{\labelitemii}{$\diamond$}
+\usepackage{framed}
+\usepackage{fancybox}
+\usepackage{niceframe}
+\newenvironment{longframe}{%
+\def\FrameCommand{\fboxsep=\FrameSep \curlyframe}%
+\MakeFramed {\FrameRestore}}%
+{\endMakeFramed}
+\usepackage{ulem}
+\usepackage{luacolor,lua-ul}
+\renewcommand{\uline}[1]{\underLine{#1}}
+\newcommand{\SOUT}[1]{\strikeThrough{#1}}
+\renewcommand{\emph}[1]{\ami{#1}}
+\newcommand{\Emph}[1]{\jkenten[s]{#1}}
+\usepackage{wrapfig}
+\newcommand{\WF}[1]{
+\begin{wrapfigure}[]{r}{0.35\textwidth}
+\vspace{-1ex}
+\hspace{-1ex}
+\adjincludegraphics[width=0.90\linewidth,angle=90]{#1}
+\end{wrapfigure}
+}
+\newcommand{\Textsuperscript}[1]{\WF{#1}}
+\newcommand{\Textsubscript}[1]{\ovalbox{#1}}
+%\usepackage{ifthen}
+%\newcommand{\tcap}{}
 \makeatletter
 \renewcommand{\maketitle}{
 \vspace*{10mm}
