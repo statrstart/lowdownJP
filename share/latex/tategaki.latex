@@ -4,6 +4,8 @@
 \usepackage[haranoaji,deluxe,nfssonly, jfm_yoko=jlreq,jfm_tate=jlreqv]{luatexja-preset}
 \usepackage[truedimen,top=20truemm,bottom=12truemm,left=12truemm,right=12truemm]{geometry}
 \usepackage{graphicx}
+\usepackage{float}
+\floatplacement{figure}{H}
 \usepackage{pxrubrica}
 \rubysetup{J}
 \usepackage{ascmac}
@@ -12,7 +14,7 @@
 \usepackage{url}
 \usepackage{hyperref}
 \usepackage{adjustbox}
-\adjustboxset*{center}
+\adjustboxset*{center,angle=90}
 \usepackage{enumitem}
 \renewcommand{\labelitemii}{$\diamond$}
 \usepackage{framed}
@@ -31,9 +33,9 @@
 \usepackage{wrapfig}
 \newcommand{\WF}[1]{
 \begin{wrapfigure}[]{r}{0.35\textwidth}
-\vspace{-1ex}
-\hspace{-1ex}
-\adjincludegraphics[width=0.90\linewidth,angle=90]{#1}
+\vspace{-\intextsep}
+\hspace{-\intextsep}
+\adjincludegraphics[width=1\linewidth]{#1}
 \end{wrapfigure}
 }
 \newcommand{\Textsuperscript}[1]{\WF{#1}}
