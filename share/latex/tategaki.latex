@@ -30,27 +30,27 @@
 \newcommand{\SOUT}[1]{\strikeThrough{#1}}
 \renewcommand{\emph}[1]{\ami{#1}}
 \newcommand{\Emph}[1]{\jkenten[s]{#1}}
-\usepackage{wrapfig}
+\usepackage{wrapstuff}
 \newcommand{\WF}[1]{
-\begin{wrapfigure}[]{r}{0.35\textwidth}
-\vspace{-\intextsep}
-\hspace{-\intextsep}
-\adjincludegraphics[width=1\linewidth]{#1}
-\end{wrapfigure}
+\begin{wrapstuff}[r,width = 0.35\linewidth]
+  \adjincludegraphics[width=\linewidth]{#1}
+\end{wrapstuff}
 }
 \newcommand{\Textsuperscript}[1]{\WF{#1}}
 \newcommand{\Textsubscript}[1]{\ovalbox{#1}}
-%\usepackage{ifthen}
-%\newcommand{\tcap}{}
 \makeatletter
 \renewcommand{\maketitle}{
+\curlyframe{
 \vspace*{10mm}
 \noindent{\huge\bfseries\@title}
-\vfill
+\vspace{8em}
+%\vfill
 \begin{flushright}
 {\Large\@author}
 \end{flushright}
-\date{\vspace{-5mm}}
+%\date{\vspace{-5mm}}
+\vspace*{10mm}
+    }
 }
 \makeatother
 \begin{document}
