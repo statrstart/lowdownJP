@@ -4,6 +4,10 @@ author: へのへの　もへじ
 
 %\pagestyle{empty}  % ページ番号をつけないようにする。
 %\setcounter{secnumdepth}{-1}  % 章番号をつけないようにする。
+%\captionsetup{labelformat=empty,labelsep=none} % キャプションの前の図1とか表1を消す
+\captionsetup[figure]{hypcap=false}
+\captionsetup[table]{hypcap=false}
+\captionsetup[コード]{hypcap=false}
 %回り込み済んだら、\leavevmode
 %注釈位置調整　\vspace*{\fill}
 %マークダウン記法をカスタマイズする。 --- : 水平線を引く命令を改ページに変更済み
@@ -25,6 +29,7 @@ MarkdownをLaTeXに変換するソフトウェアは「pandoc」やその超拡�
 YAMLヘッダーで出力フォーマットだのなんだの指定するのが煩わしくなります。（個人的にはPDF一択なので）
 
 で、他になにかいい感じのソフトがないかとgithubで探してみたら、[lowdown:simple markdown translator](https://github.com/kristapsdz/lowdown)を見つけました。
+詳しくは、\cite{ManPage}。
 このソフト、プリアンブルはプログラム内に組み込むようになっています。ただ使用するdocumentclassがarticleなので、日本語の文章を書く場合は外部テンプレートを
 読み込む必要があります。そこで、まず`latex.c`を書き換えて外部テンプレートを読み込むことなく日本語が使えるようにしてみました。（documentclass指定の
 前にiftex.styを読み込み、処理系にpdflatex使用ならarticle、lualatexならltjsarticle、xelatexならbxjsarticleというように処理系に合わせてdocumentclassを変更する）
@@ -144,9 +149,17 @@ $$\int^\pi_0 \cos ^2 (x)dx$$
 二人は、こういって、いっしょうけんめいに雪を\ruby{一処}{ひとところ}にあつめて、
 雪だるまをつくりはじめました。
 
+そこは、人通りのない、家の前の圃の中でありました。梅の木も、かきの木も、すでに二、三尺も根もとのほうは雪にうずもれていました。
+そして、わらぐつをはきさえすれば、子供たちは圃の上を自由に、どこへでもゆくことができたのであります。
+
+頭の上の空は、青々として、ちょうどガラスをふいたようにさえていました。あちらこちらには、たこがあがって、籐の鳴り音が聞こえていました。
+けれど、二人は、そんなことにわき見もせずに、せっせと雪を運んでは、だるまをつくっていました。昼前かかって、やっと半分ばかりしかできませんでした。
+
+\leavevmode
+
 # プログラムにキャプションをつける
 
-~lowdownJP.sh~
+~lowdown.sh~
 
 ```
 #!/bin/sh
@@ -158,16 +171,16 @@ rm $1.log $1.aux $1.out
 ~lowdownでpdf作成~
 
 ```
-./lowdownJP.sh samplej lualatex
+./lowdown.sh samplej lualatex
 ```
 
 ~latexmkを使う場合~
 
 ```
-./lowdownJP.sh samplej latexmk
+./lowdown.sh samplej latexmk
 ```
 
-~lowdownJP2.sh（外部テンプレートを使う）~
+~lowdown2.sh（外部テンプレートを使う）~
 
 ```
 #!/bin/sh
@@ -179,10 +192,8 @@ rm $1.log $1.aux $1.out
 ~外部テンプレートを使ってpdf作成~
 
 ```
-./lowdownJP2.sh yukidaruma lualatex
+./lowdown2.sh yukidaruma lualatex
 ```
-
----
 
 # 段組み
 
@@ -194,8 +205,6 @@ rm $1.log $1.aux $1.out
 吾輩はここで始めて人間というものを見た。
 しかもあとで聞くとそれは書生という人間中で一番\ruby{獰悪}{どうあく}な種族であったそうだ。
 \end{multicols}
-
-\leavevmode
 
 # 枠付き文章
 
@@ -212,3 +221,8 @@ rm $1.log $1.aux $1.out
 `\ref{tbl:文字の修飾の表}`\ref{tbl:文字の修飾の表}
 
 `\ref{code:外部テンプレートを使ってpdf作成}`\ref{code:外部テンプレートを使ってpdf作成}
+
+\renewcommand{\refname}{参考}
+\begin{thebibliography}{9}
+\bibitem{ManPage} lowdown-Man Page {https://www.mankier.com/5/lowdown#}
+\end{thebibliography}
